@@ -1,0 +1,12 @@
+install mise packages: python
+1s
+mise python@3.11.8   [1/3] install
+mise python@3.11.8   [1/3] download cpython-3.11.8+20240224-x86_64-unknown-linux-gnu-install_only.tar.gz
+mise python@3.11.8   [1/3] generate checksum cpython-3.11.8+20240224-x86_64-unknown-linux-gnu-install_only.tar.gz
+mise python@3.11.8   [1/3] verify GitHub artifact attestations
+mise ERROR Failed to install core:python@3.11.8: No GitHub artifact attestations found for python@3.11.8
+To disable attestation verification, set MISE_PYTHON_GITHUB_ATTESTATIONS=false
+or add `python.github_attestations = false` under [settings] in mise.toml
+mise ERROR Version: 2026.6.12 linux-x64 (2026-06-22)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+Build Failed: build daemon returned an error < failed to solve: process "mise install" did not complete successfully: exit code: 1 >
