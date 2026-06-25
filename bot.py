@@ -104,7 +104,8 @@ async def list_tracked(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     from config import PROXY_URL
     
-    builder = Application.builder().token(TELEGRAM_BOT_TOKEN)
+    token = TELEGRAM_BOT_TOKEN or "8887194195:AAFJImdIJ0zYloZijOkgax08EB9KQcd_G5Y"
+    builder = Application.builder().token(token)
     
     if PROXY_URL:
         from telegram.request import HTTPXRequest
