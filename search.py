@@ -27,6 +27,7 @@ def search_all_stores(query: str) -> List[Dict]:
         print(f"Import error: {e}")
         return []
 
+    all_results = []
     scrapers = [
         ("Wildberries", search_wildberries),
         ("Ozon", search_ozon),
