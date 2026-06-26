@@ -41,10 +41,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("Ищу цены...")
 
-    loop = asyncio.get_event_loop()
-    results = await loop.run_in_executor(None, search.search_all_stores, query)
-    response = search.format_results(results)
-    await update.message.reply_text(response)
+    try:
+        results = await asyncio.to_thread(search.search_all_stores, query)
+        response = search.format_results(results)
+        await update.message.reply_text(response)
+    except Exception as e:
+        print(f"Search error: {e}")
+        await update.message.reply_text("Ошибка поиска. Попробуйте позже.")
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     photo = update.message.photo[-1]
