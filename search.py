@@ -82,21 +82,26 @@ def format_results(results: List[Dict]) -> str:
         return "Товары не найдены"
 
     priced = [r for r in results if r.get("price", 0) > 0]
+    links = [r for r in results if r.get("price", 0) == 0]
 
-    if not priced:
-        return "Товары не найдены с актуальными ценами"
+    lines = []
 
-    priced.sort(key=lambda x: x["price"])
-    lines = ["Лучшие цены:\n"]
+    if priced:
+        priced.sort(key=lambda x: x["price"])
+        lines.append("Лучшие цены:\n")
+        for i, r in enumerate(priced[:5], 1):
+            name = r["name"][:45]
+            lines.append("{}. {} - {} руб".format(i, r["store"], r["price"]))
+            lines.append("   {}".format(name))
+            lines.append("   {}\n".format(r["url"][:90]))
 
-    for i, r in enumerate(priced[:5], 1):
-        name = r["name"][:45]
-        lines.append("{}. {} - {} руб".format(i, r["store"], r["price"]))
-        lines.append("   {}".format(name))
-        lines.append("   {}\n".format(r["url"][:90]))
+    if links:
+        lines.append("Проверить цены:")
+        for r in links[:8]:
+            lines.append("- {}: {}".format(r["store"], r["url"][:80]))
 
-    if len(lines) > 1:
-        lines.append("Все цены актуальны на момент поиска")
+    if not priced and not links:
+        return "Товары не найдены"
 
     text = "\n".join(lines)
     if len(text) > 4000:

@@ -2,9 +2,9 @@ from typing import List, Dict
 from .fetch import fetch
 
 def search_apteka366(query: str) -> List[Dict]:
-    resp = fetch(f"https://apteka.ru/search?text={query}", timeout=5)
+    resp = fetch("https://apteka.ru/search/?q=" + query.replace(" ", "+"), timeout=5)
     if not resp or resp.status_code != 200:
-        return [{"name": query, "price": 0, "url": f"https://apteka.ru/search?text={query}", "store": "36.6"}]
+        return [{"name": query, "price": 0, "url": "https://apteka.ru/search/?q=" + query.replace(" ", "+"), "store": "Аптека.ру"}]
 
     from bs4 import BeautifulSoup
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -20,11 +20,11 @@ def search_apteka366(query: str) -> List[Dict]:
                 price_text = price_el.get_text(strip=True).replace(" ", "").replace("₽", "")
                 price = float(''.join(filter(str.isdigit, price_text))) if price_text else 0
                 href = link_el["href"] if link_el else ""
-                url = f"https://apteka.ru{href}" if href and not href.startswith("http") else href
-                results.append({"name": name, "price": price, "url": url, "store": "36.6"})
+                url = "https://apteka.ru" + href if href and not href.startswith("http") else href
+                results.append({"name": name, "price": price, "url": url, "store": "Аптека.ру"})
         except (ValueError, AttributeError):
             continue
 
     if not results:
-        results.append({"name": query, "price": 0, "url": f"https://apteka.ru/search?text={query}", "store": "36.6"})
+        results.append({"name": query, "price": 0, "url": "https://apteka.ru/search/?q=" + query.replace(" ", "+"), "store": "Аптека.ру"})
     return results
