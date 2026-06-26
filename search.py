@@ -26,7 +26,7 @@ def search_all_stores(query: str) -> List[Dict]:
     except ImportError as e:
         print(f"Import error: {e}")
         return []
-    all_results = []
+
     scrapers = [
         ("Wildberries", search_wildberries),
         ("Ozon", search_ozon),
@@ -59,40 +59,45 @@ def search_all_stores(query: str) -> List[Dict]:
             except Exception as e:
                 print(f"Error: {futures[future]} - {e}")
 
-    total_elapsed = time.time() - total_start
-    print(f"Search completed in {total_elapsed:.1f}s, {len(all_results)} results")
+    # Limit Yandex Market to 3 results
+    ym_count = 0
+    filtered = []
+    for r in all_results:
+        if r["store"] == "Яндекс.Маркет":
+            ym_count += 1
+            if ym_count <= 3:
+                filtered.append(r)
+        else:
+            filtered.append(r)
 
-    all_results.sort(key=lambda x: x.get("price", 0))
-    return all_results
+    total_elapsed = time.time() - total_start
+    print(f"Search completed in {total_elapsed:.1f}s, {len(filtered)} results")
+
+    filtered.sort(key=lambda x: x.get("price", 0))
+    return filtered
 
 def format_results(results: List[Dict]) -> str:
     if not results:
         return "Товары не найдены"
 
     priced = [r for r in results if r.get("price", 0) > 0]
-    links = [r for r in results if r.get("price", 0) == 0]
 
-    lines = []
+    if not priced:
+        return "Товары не найдены с актуальными ценами"
 
-    if priced:
-        priced.sort(key=lambda x: x["price"])
-        lines.append("Найдено {} товаров с ценами:\n".format(len(priced)))
+    priced.sort(key=lambda x: x["price"])
+    lines = ["Лучшие цены:\n"]
 
-        for i, r in enumerate(priced[:10], 1):
-            name = r["name"][:50]
-            lines.append("{}. {} - {} руб".format(i, r["store"], r["price"]))
-            lines.append("   {}".format(name))
-            lines.append("   {}\n".format(r["url"][:80]))
+    for i, r in enumerate(priced[:5], 1):
+        name = r["name"][:45]
+        lines.append("{}. {} - {} руб".format(i, r["store"], r["price"]))
+        lines.append("   {}".format(name))
+        lines.append("   {}\n".format(r["url"][:90]))
 
-    if links:
-        lines.append("Посмотреть цены:")
-        for r in links[:8]:
-            lines.append("- {}: {}".format(r["store"], r["url"][:70]))
-
-    if not priced and not links:
-        return "Товары не найдены"
+    if len(lines) > 1:
+        lines.append("Все цены актуальны на момент поиска")
 
     text = "\n".join(lines)
     if len(text) > 4000:
-        text = text[:4000] + "\n\n...результат обрезан"
+        text = text[:4000]
     return text
