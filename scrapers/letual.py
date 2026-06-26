@@ -1,51 +1,65 @@
 import requests
-from bs4 import BeautifulSoup
-from typing import List, Dict
-from config import REQUEST_DELAY
+import json
 import time
+from typing import List, Dict
+
+_session = None
+
+def _get_session():
+    global _session
+    if _session is None:
+        _session = requests.Session()
+        _session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'ru-RU,ru;q=0.9',
+        })
+    return _session
 
 
 def search_letual(query: str) -> List[Dict]:
     results = []
-    url = f"https://www.letual.ru/search?text={query}"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "ru-RU,ru;q=0.9"
-    }
-
+    # Try Letual search page
     try:
-        time.sleep(REQUEST_DELAY)
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
+        session = _get_session()
+        url = 'https://www.letual.ru/search?q=' + query.replace(' ', '+')
+        resp = session.get(url, timeout=10, allow_redirects=True)
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        if resp.status_code == 200:
+            text = resp.text
 
-        cards = soup.find_all("div", class_="product-card")
+            # Try to extract from JSON embedded in page
+            import re
+            json_matches = re.findall(r'window\.__INITIAL_STATE__\s*=\s*({.*?});', text)
+            if json_matches:
+                try:
+                    data = json.loads(json_matches[0])
+                    search_state = data.get('search', {}).get('searchResults', {})
+                    items = search_state.get('items', [])
+                    for item in items[:5]:
+                        title = item.get('title', '')
+                        price_val = item.get('price', 0)
+                        item_id = item.get('id', 0)
+                        if title and price_val:
+                            results.append({
+                                'name': title,
+                                'price': float(price_val),
+                                'url': 'https://www.letual.ru/product/' + str(item_id),
+                                'store': 'Летуаль'
+                            })
+                except (json.JSONDecodeError, KeyError):
+                    pass
+    except Exception:
+        pass
 
-        for card in cards[:5]:
-            try:
-                name_elem = card.find("a", class_="product-card__name")
-                price_elem = card.find("span", class_="price")
-                link_elem = card.find("a", href=True)
-
-                if name_elem and price_elem:
-                    name = name_elem.get_text(strip=True)
-                    price_text = price_elem.get_text(strip=True)
-                    price = float(''.join(filter(str.isdigit, price_text)))
-                    product_url = f"https://www.letual.ru{link_elem['href']}" if link_elem else url
-
-                    results.append({
-                        "name": name,
-                        "price": price,
-                        "url": product_url,
-                        "store": "Летуаль"
-                    })
-            except (ValueError, AttributeError):
-                continue
-
-    except Exception as e:
-        print(f"Letual scraping error: {e}")
+    # Fallback to search link
+    if not results:
+        results.append({
+            'name': query,
+            'price': 0,
+            'url': 'https://www.letual.ru/search?q=' + query.replace(' ', '+'),
+            'store': 'Летуаль'
+        })
 
     return results

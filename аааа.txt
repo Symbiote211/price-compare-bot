@@ -1,0 +1,105 @@
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 337, in __init__
+    raise InvalidToken("You must pass the token you received from https://t.me/Botfather!")
+telegram.error.InvalidToken: You must pass the token you received from https://t.me/Botfather!
+Traceback (most recent call last):
+  File "/app/bot.py", line 127, in <module>
+    main()
+  File "/app/bot.py", line 114, in main
+    application = builder.build()
+                  ^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 309, in build
+    bot: Bot = self._build_ext_bot()  # build a bot
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 271, in _build_ext_bot
+    return ExtBot(
+           ^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 252, in __init__
+    super().__init__(
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 337, in __init__
+    raise InvalidToken("You must pass the token you received from https://t.me/Botfather!")
+telegram.error.InvalidToken: You must pass the token you received from https://t.me/Botfather!
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 252, in __init__
+Traceback (most recent call last):
+    super().__init__(
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 337, in __init__
+  File "/app/bot.py", line 127, in <module>
+    raise InvalidToken("You must pass the token you received from https://t.me/Botfather!")
+    main()
+telegram.error.InvalidToken: You must pass the token you received from https://t.me/Botfather!
+  File "/app/bot.py", line 114, in main
+    application = builder.build()
+                  ^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 309, in build
+    bot: Bot = self._build_ext_bot()  # build a bot
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 271, in _build_ext_bot
+    return ExtBot(
+           ^^^^^^^
+Traceback (most recent call last):
+  File "/app/bot.py", line 127, in <module>
+    main()
+  File "/app/bot.py", line 114, in main
+    application = builder.build()
+                  ^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 309, in build
+    bot: Bot = self._build_ext_bot()  # build a bot
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 271, in _build_ext_bot
+    return ExtBot(
+           ^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 252, in __init__
+    super().__init__(
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 337, in __init__
+    raise InvalidToken("You must pass the token you received from https://t.me/Botfather!")
+telegram.error.InvalidToken: You must pass the token you received from https://t.me/Botfather!
+Traceback (most recent call last):
+  File "/app/bot.py", line 127, in <module>
+    main()
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 337, in __init__
+    application = builder.build()
+  File "/app/bot.py", line 114, in main
+    raise InvalidToken("You must pass the token you received from https://t.me/Botfather!")
+                  ^^^^^^^^^^^^^^^
+telegram.error.InvalidToken: You must pass the token you received from https://t.me/Botfather!
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 309, in build
+    bot: Bot = self._build_ext_bot()  # build a bot
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 271, in _build_ext_bot
+    return ExtBot(
+           ^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 252, in __init__
+    super().__init__(
+Traceback (most recent call last):
+    raise InvalidToken("You must pass the token you received from https://t.me/Botfather!")
+  File "/app/bot.py", line 127, in <module>
+telegram.error.InvalidToken: You must pass the token you received from https://t.me/Botfather!
+    main()
+  File "/app/bot.py", line 114, in main
+    application = builder.build()
+                  ^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 309, in build
+    bot: Bot = self._build_ext_bot()  # build a bot
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 271, in _build_ext_bot
+    return ExtBot(
+           ^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 252, in __init__
+    super().__init__(
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 337, in __init__
+    bot: Bot = self._build_ext_bot()  # build a bot
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 271, in _build_ext_bot
+    return ExtBot(
+           ^^^^^^^
+Traceback (most recent call last):
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 252, in __init__
+    super().__init__(
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 337, in __init__
+    raise InvalidToken("You must pass the token you received from https://t.me/Botfather!")
+  File "/app/bot.py", line 127, in <module>
+telegram.error.InvalidToken: You must pass the token you received from https://t.me/Botfather!
+    main()
+  File "/app/bot.py", line 114, in main
+    application = builder.build()
+                  ^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_applicationbuilder.py", line 309, in build

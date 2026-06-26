@@ -1,60 +1,79 @@
 import requests
-from bs4 import BeautifulSoup
-from typing import List, Dict
-from config import OZON_SEARCH_URL, REQUEST_DELAY
-import time
 import json
+import time
+from typing import List, Dict
+
+_session = None
+
+def _get_session():
+    global _session
+    if _session is None:
+        _session = requests.Session()
+        _session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'ru-RU,ru;q=0.9',
+        })
+    return _session
 
 
 def search_ozon(query: str) -> List[Dict]:
     results = []
-    url = OZON_SEARCH_URL.format(query=query)
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "ru-RU,ru;q=0.9"
-    }
-
+    # Try Ozon search page
     try:
-        time.sleep(REQUEST_DELAY)
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
+        session = _get_session()
+        url = 'https://www.ozon.ru/search/?text=' + query.replace(' ', '+')
+        resp = session.get(url, timeout=10, allow_redirects=True)
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        if resp.status_code == 200:
+            text = resp.text
 
-        scripts = soup.find_all("script", type="application/json")
-        for script in scripts:
-            try:
-                data = json.loads(script.string)
-                if "searchResult" in str(data)[:100]:
-                    items = data.get("widgetStates", {}).get("searchResultsV2", [])
-                    if isinstance(items, list):
-                        for item in items[:5]:
+            # Try to extract from JSON embedded in page
+            import re
+            json_matches = re.findall(r'window\.__INITIAL_STATE__\s*=\s*({.*?});', text)
+            if json_matches:
+                try:
+                    data = json.loads(json_matches[0])
+                    # Navigate the nested structure
+                    search_state = data.get('search', {}).get('searchResults', {})
+                    items = search_state.get('items', [])
+                    for item in items[:5]:
+                        title = item.get('title', '')
+                        price_val = item.get('price', 0)
+                        item_id = item.get('id', 0)
+                        if title and price_val:
                             results.append({
-                                "name": item.get("title", ""),
-                                "price": float(item.get("price", "0").replace(" ", "")),
-                                "url": f"https://www.ozon.ru{item.get('link', '')}",
-                                "store": "Ozon"
+                                'name': title,
+                                'price': float(price_val),
+                                'url': 'https://www.ozon.ru/product/' + str(item_id),
+                                'store': 'Ozon'
                             })
-                    break
-            except (json.JSONDecodeError, ValueError):
-                continue
+                except (json.JSONDecodeError, KeyError):
+                    pass
 
-        if not results:
-            cards = soup.find_all("div", class_="widget-search-result-container")
-            for card in cards[:5]:
-                name = card.find("span", class_="tsBody500Medium")
-                price = card.find("span", class_="tsHeadline500Medium")
-                if name and price:
-                    results.append({
-                        "name": name.get_text(strip=True),
-                        "price": float(''.join(filter(str.isdigit, price.get_text()))),
-                        "url": url,
-                        "store": "Ozon"
-                    })
+            # Try regex for prices in HTML
+            if not results:
+                price_pattern = r'"name":"([^"]+)"[^}]*?"price":"?(\d+)"?'
+                matches = re.findall(price_pattern, text)
+                for name, price in matches[:5]:
+                    if int(price) > 0:
+                        results.append({
+                            'name': name,
+                            'price': float(price),
+                            'url': url,
+                            'store': 'Ozon'
+                        })
+    except Exception:
+        pass
 
-    except Exception as e:
-        print(f"Ozon scraping error: {e}")
+    # Fallback to search link
+    if not results:
+        results.append({
+            'name': query,
+            'price': 0,
+            'url': 'https://www.ozon.ru/search/?text=' + query.replace(' ', '+'),
+            'store': 'Ozon'
+        })
 
     return results
