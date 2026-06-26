@@ -9,6 +9,7 @@ import categories
 import image_recognizer
 from ocr import extract_text_from_image
 from database import Database
+from price_history import PriceHistory
 
 db = Database()
 
@@ -21,6 +22,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Команды:\n"
         "/track <название> — добавить в отслеживание\n"
         "/list — мои отслеживаемые товары\n"
+        "/history <название> — история цен\n"
+        "/trend <название> — тренд цен\n"
         "/categories — категории товаров\n"
         "/help — помощь"
     )
@@ -34,6 +37,9 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📊 Отслеживание цен:\n"
         "/track <название> — добавить товар\n"
         "/list — список отслеживаемых\n\n"
+        "📈 История и тренды:\n"
+        "/history <название> — история цен\n"
+        "/trend <название> — тренд цен\n\n"
         "📂 Категории:\n"
         "/categories — список категорий\n"
         "/category <название> — поиск в категории"
@@ -150,6 +156,65 @@ async def category_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"Ошибка поиска: {str(e)[:100]}")
 
+async def price_history_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("Использование: /history <название товара>")
+        return
+
+    product_name = " ".join(context.args)
+
+    history = PriceHistory()
+    try:
+        await history.connect()
+        records = await history.get_price_history(product_name)
+
+        if not records:
+            await update.message.reply_text(f"📭 Нет истории цен для: {product_name}")
+            return
+
+        lines = [f"📊 История цен: {product_name}\n"]
+        for entry in records[:10]:
+            lines.append(f"• {entry['price']:.0f}₽ — {entry['store']} ({entry['recorded_at'][:10]})")
+
+        await update.message.reply_text("\n".join(lines))
+    except Exception as e:
+        await update.message.reply_text(f"Ошибка: {str(e)[:100]}")
+    finally:
+        await history.close()
+
+async def price_trend_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("Использование: /trend <название товара>")
+        return
+
+    product_name = " ".join(context.args)
+
+    history = PriceHistory()
+    try:
+        await history.connect()
+        trend = await history.get_price_trend(product_name)
+
+        if trend["current"] is None:
+            await update.message.reply_text(f"📭 Нет данных о ценах для: {product_name}")
+            return
+
+        trend_emoji = {"increasing": "📈", "decreasing": "📉", "stable": "➡️", "unknown": "❓"}
+        emoji = trend_emoji.get(trend["trend"], "❓")
+
+        lines = [
+            f"📈 Тренд цен: {product_name}\n",
+            f"💰 Текущая цена: {trend['current']:.0f}₽",
+            f"📉 Минимум: {trend['min']:.0f}₽",
+            f"📈 Максимум: {trend['max']:.0f}₽",
+            f"\n{emoji} Тренд: {trend['trend']}"
+        ]
+
+        await update.message.reply_text("\n".join(lines))
+    except Exception as e:
+        await update.message.reply_text(f"Ошибка: {str(e)[:100]}")
+    finally:
+        await history.close()
+
 def main():
     from config import PROXY_URL
     
@@ -169,6 +234,8 @@ def main():
     application.add_handler(CommandHandler("list", list_tracked))
     application.add_handler(CommandHandler("categories", list_categories))
     application.add_handler(CommandHandler("category", category_search))
+    application.add_handler(CommandHandler("history", price_history_command))
+    application.add_handler(CommandHandler("trend", price_trend_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
 
