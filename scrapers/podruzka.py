@@ -1,50 +1,31 @@
-import requests
-from bs4 import BeautifulSoup
-from typing import List, Dict
-from config import REQUEST_DELAY
 import time
+from typing import List, Dict
+from .fetch import fetch
 
 def search_podruzka(query: str) -> List[Dict]:
+    resp = fetch(f"https://podruzka.ru/search?text={query}", timeout=5)
+    if not resp or resp.status_code != 200:
+        return [{"name": query, "price": 0, "url": f"https://podruzka.ru/search?text={query}", "store": "Подружка"}]
+
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(resp.text, "html.parser")
     results = []
-    url = f"https://www.podruzka.ru/search?text={query}"
-    
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "ru-RU,ru;q=0.9"
-    }
-    
-    try:
-        time.sleep(REQUEST_DELAY)
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, "html.parser")
-        
-        cards = soup.find_all("div", class_="product-card")
-        
-        for card in cards[:5]:
-            try:
-                name_elem = card.find("a", class_="product-card__name")
-                price_elem = card.find("span", class_="price")
-                link_elem = card.find("a", href=True)
-                
-                if name_elem and price_elem:
-                    name = name_elem.get_text(strip=True)
-                    price_text = price_elem.get_text(strip=True)
-                    price = float(''.join(filter(str.isdigit, price_text)))
-                    product_url = f"https://www.podruzka.ru{link_elem['href']}" if link_elem else url
-                    
-                    results.append({
-                        "name": name,
-                        "price": price,
-                        "url": product_url,
-                        "store": "Подружка"
-                    })
-            except (ValueError, AttributeError):
-                continue
-                
-    except Exception as e:
-        print(f"Podruzka scraping error: {e}")
-    
+
+    for card in soup.find_all("div", class_="product-card")[:5]:
+        try:
+            name_el = card.find("a", class_="product-card__name")
+            price_el = card.find("span", class_="price")
+            link_el = card.find("a", href=True)
+            if name_el and price_el:
+                name = name_el.get_text(strip=True)
+                price_text = price_el.get_text(strip=True).replace(" ", "").replace("₽", "")
+                price = float(''.join(filter(str.isdigit, price_text))) if price_text else 0
+                href = link_el["href"] if link_el else ""
+                url = f"https://podruzka.ru{href}" if href and not href.startswith("http") else href
+                results.append({"name": name, "price": price, "url": url, "store": "Подружка"})
+        except (ValueError, AttributeError):
+            continue
+
+    if not results:
+        results.append({"name": query, "price": 0, "url": f"https://podruzka.ru/search?text={query}", "store": "Подружка"})
     return results
