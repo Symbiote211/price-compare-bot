@@ -46,8 +46,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response = search.format_results(results)
         await update.message.reply_text(response)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"Search error: {e}")
-        await update.message.reply_text("Ошибка поиска. Попробуйте позже.")
+        await update.message.reply_text("Ошибка поиска: " + str(e)[:100])
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     photo = update.message.photo[-1]

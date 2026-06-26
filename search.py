@@ -10,18 +10,22 @@ def _safe_search(func, query):
         return []
 
 def search_all_stores(query: str) -> List[Dict]:
-    from scrapers.wildberries import search_wildberries
-    from scrapers.ozon import search_ozon
-    from scrapers.yandex_market import search_yandex_market
-    from scrapers.goldapple import search_goldapple
-    from scrapers.letual import search_letual
-    from scrapers.podruzka import search_podruzka
-    from scrapers.magnit_cosmetic import search_magnit_cosmetic
-    from scrapers.rivgosh import search_rivgosh
-    from scrapers.iledebeaute import search_iledebeaute
-    from scrapers.svyetofor import search_svyetofor
-    from scrapers.apteka366 import search_apteka366
-    from scrapers.aliexpress import search_aliexpress
+    try:
+        from scrapers.wildberries import search_wildberries
+        from scrapers.ozon import search_ozon
+        from scrapers.yandex_market import search_yandex_market
+        from scrapers.goldapple import search_goldapple
+        from scrapers.letual import search_letual
+        from scrapers.podruzka import search_podruzka
+        from scrapers.magnit_cosmetic import search_magnit_cosmetic
+        from scrapers.rivgosh import search_rivgosh
+        from scrapers.iledebeaute import search_iledebeaute
+        from scrapers.svyetofor import search_svyetofor
+        from scrapers.apteka366 import search_apteka366
+        from scrapers.aliexpress import search_aliexpress
+    except ImportError as e:
+        print(f"Import error: {e}")
+        return []
     all_results = []
     scrapers = [
         ("Wildberries", search_wildberries),
