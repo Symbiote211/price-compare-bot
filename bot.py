@@ -39,7 +39,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not query:
         return
 
-    results = search.search_all_stores(query)
+    await update.message.reply_text("Ищу цены...")
+
+    loop = asyncio.get_event_loop()
+    results = await loop.run_in_executor(None, search.search_all_stores, query)
     response = search.format_results(results)
     await update.message.reply_text(response)
 

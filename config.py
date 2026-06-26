@@ -15,7 +15,7 @@ PRICE_CHECK_HOUR = int(os.getenv("PRICE_CHECK_HOUR", "9"))
 PRICE_DROP_THRESHOLD = float(os.getenv("PRICE_DROP_THRESHOLD", "5"))
 
 # Scraping delays (seconds)
-REQUEST_DELAY = 1.5
+REQUEST_DELAY = 0.5
 
 # Database
 DATABASE_PATH = "price_tracker.db"

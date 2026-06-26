@@ -32,10 +32,10 @@ def search_wildberries(query: str) -> List[Dict]:
     global _last_request_time
     results = []
 
-    # Rate limit: wait at least 20 seconds between requests
+    # Rate limit: wait at least 3 seconds between requests
     elapsed = time.time() - _last_request_time
-    if elapsed < 20:
-        time.sleep(20 - elapsed)
+    if elapsed < 3:
+        time.sleep(3 - elapsed)
 
     try:
         session = _get_session()
