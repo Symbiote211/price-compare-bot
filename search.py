@@ -1,5 +1,7 @@
 from typing import List, Dict
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
+from price_history import PriceHistory
+import asyncio
 import time
 
 def _safe_search(func, query):
@@ -9,7 +11,7 @@ def _safe_search(func, query):
         print(f"Scraper error: {e}")
         return []
 
-def search_all_stores(query: str) -> List[Dict]:
+def search_all_stores(query: str, save_history: bool = False) -> List[Dict]:
     try:
         from scrapers.wildberries import search_wildberries
         from scrapers.ozon import search_ozon
@@ -75,6 +77,24 @@ def search_all_stores(query: str) -> List[Dict]:
     print(f"Search completed in {total_elapsed:.1f}s, {len(filtered)} results")
 
     filtered.sort(key=lambda x: x.get("price", 0))
+
+    if save_history:
+        priced_results = [r for r in filtered if r.get("price", 0) > 0]
+        if priced_results:
+            try:
+                history = PriceHistory()
+                asyncio.run(history.connect())
+                for r in priced_results:
+                    asyncio.run(history.save_price(
+                        product=r["name"],
+                        store=r["store"],
+                        price=r["price"],
+                        url=r.get("url")
+                    ))
+                asyncio.run(history.close())
+            except Exception as e:
+                print(f"Error saving price history: {e}")
+
     return filtered
 
 def format_results(results: List[Dict]) -> str:
