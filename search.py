@@ -79,16 +79,20 @@ def format_results(results: List[Dict]) -> str:
         lines.append("Найдено {} товаров с ценами:\n".format(len(priced)))
 
         for i, r in enumerate(priced[:10], 1):
+            name = r["name"][:50]
             lines.append("{}. {} - {} руб".format(i, r["store"], r["price"]))
-            lines.append("   {}".format(r["name"][:60]))
-            lines.append("   {}\n".format(r["url"]))
+            lines.append("   {}".format(name))
+            lines.append("   {}\n".format(r["url"][:80]))
 
     if links:
-        lines.append("\nПосмотреть цены в других магазинах:")
-        for r in links:
-            lines.append("- {}: {}".format(r["store"], r["url"]))
+        lines.append("Посмотреть цены:")
+        for r in links[:8]:
+            lines.append("- {}: {}".format(r["store"], r["url"][:70]))
 
     if not priced and not links:
         return "Товары не найдены"
 
-    return "\n".join(lines)
+    text = "\n".join(lines)
+    if len(text) > 4000:
+        text = text[:4000] + "\n\n...результат обрезан"
+    return text
