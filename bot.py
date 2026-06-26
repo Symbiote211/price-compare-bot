@@ -10,6 +10,7 @@ import image_recognizer
 from ocr import extract_text_from_image
 from database import Database
 from price_history import PriceHistory
+from notifications import check_sales, format_sale_notification
 
 db = Database()
 
@@ -22,6 +23,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Команды:\n"
         "/track <название> — добавить в отслеживание\n"
         "/list — мои отслеживаемые товары\n"
+        "/sales — текущие скидки\n"
         "/history <название> — история цен\n"
         "/trend <название> — тренд цен\n"
         "/categories — категории товаров\n"
@@ -215,6 +217,42 @@ async def price_trend_command(update: Update, context: ContextTypes.DEFAULT_TYPE
     finally:
         await history.close()
 
+async def sales_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+
+    await db.connect()
+    products = await db.get_tracked_products(user_id)
+    await db.close()
+
+    if not products:
+        await update.message.reply_text("📭 У вас нет отслеживаемых товаров. Добавьте товар через /track")
+        return
+
+    history = PriceHistory()
+    all_sales = []
+    try:
+        await history.connect()
+        for product in products:
+            records = await history.get_price_history(product["product_name"])
+            if records:
+                sales = check_sales(records)
+                all_sales.extend(sales)
+    except Exception as e:
+        await update.message.reply_text(f"Ошибка: {str(e)[:100]}")
+        return
+    finally:
+        await history.close()
+
+    if not all_sales:
+        await update.message.reply_text("💰 Сейчас нет активных скидок на отслеживаемые товары")
+        return
+
+    lines = ["🔥 Текущие скидки:\n"]
+    for sale in all_sales[:5]:
+        lines.append(format_sale_notification(sale))
+
+    await update.message.reply_text("\n---\n".join(lines))
+
 def main():
     from config import PROXY_URL
     
@@ -236,6 +274,7 @@ def main():
     application.add_handler(CommandHandler("category", category_search))
     application.add_handler(CommandHandler("history", price_history_command))
     application.add_handler(CommandHandler("trend", price_trend_command))
+    application.add_handler(CommandHandler("sales", sales_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
 

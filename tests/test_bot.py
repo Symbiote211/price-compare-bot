@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
-from bot import handle_message, handle_photo, list_categories, category_search, price_history_command, price_trend_command
+from bot import handle_message, handle_photo, list_categories, category_search, price_history_command, price_trend_command, sales_command
 
 @pytest.mark.asyncio
 @patch('search.search_all_stores')
@@ -204,3 +204,49 @@ async def test_price_trend_no_data():
     update.message.reply_text.assert_called_once()
     reply_text = update.message.reply_text.call_args[0][0]
     assert "Нет данных" in reply_text
+
+@pytest.mark.asyncio
+async def test_sales_command():
+    update = MagicMock()
+    update.message.reply_text = AsyncMock()
+    context = MagicMock()
+
+    mock_db = MagicMock()
+    mock_db.get_tracked_products = AsyncMock(return_value=[
+        {"product_name": "Dove гель"}
+    ])
+    mock_db.connect = AsyncMock()
+    mock_db.close = AsyncMock()
+
+    mock_history = MagicMock()
+    mock_history.get_price_history = AsyncMock(return_value=[
+        {"product": "Dove гель", "store": "Ozon", "price": 149, "url": "test.ru", "recorded_at": "2025-01-15"},
+        {"product": "Dove гель", "store": "Ozon", "price": 189, "url": "test.ru", "recorded_at": "2025-01-14"}
+    ])
+    mock_history.connect = AsyncMock()
+    mock_history.close = AsyncMock()
+
+    with patch('bot.db', mock_db), patch('bot.PriceHistory', return_value=mock_history):
+        await sales_command(update, context)
+
+    assert update.message.reply_text.call_count >= 1
+    reply_text = update.message.reply_text.call_args[0][0]
+    assert "скидк" in reply_text.lower() or "SALE" in reply_text
+
+@pytest.mark.asyncio
+async def test_sales_command_no_tracked():
+    update = MagicMock()
+    update.message.reply_text = AsyncMock()
+    context = MagicMock()
+
+    mock_db = MagicMock()
+    mock_db.get_tracked_products = AsyncMock(return_value=[])
+    mock_db.connect = AsyncMock()
+    mock_db.close = AsyncMock()
+
+    with patch('bot.db', mock_db):
+        await sales_command(update, context)
+
+    update.message.reply_text.assert_called_once()
+    reply_text = update.message.reply_text.call_args[0][0]
+    assert "нет отслеживаемых" in reply_text.lower()
