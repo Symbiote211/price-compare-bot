@@ -97,8 +97,12 @@ def format_results(results: List[Dict]) -> str:
 
     if links:
         lines.append("Проверить цены:")
-        for r in links[:8]:
-            lines.append("- {}: {}".format(r["store"], r["url"][:80]))
+        seen = set()
+        for r in links:
+            store = r["store"]
+            if store not in seen:
+                seen.add(store)
+                lines.append("- {}: {}".format(store, r["url"]))
 
     if not priced and not links:
         return "Товары не найдены"
