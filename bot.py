@@ -5,6 +5,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from config import TELEGRAM_BOT_TOKEN
 import search
+import categories
 import image_recognizer
 from ocr import extract_text_from_image
 from database import Database
@@ -20,6 +21,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Команды:\n"
         "/track <название> — добавить в отслеживание\n"
         "/list — мои отслеживаемые товары\n"
+        "/categories — категории товаров\n"
         "/help — помощь"
     )
 
@@ -31,7 +33,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "3. Я покажу цены в разных магазинах\n\n"
         "📊 Отслеживание цен:\n"
         "/track <название> — добавить товар\n"
-        "/list — список отслеживаемых"
+        "/list — список отслеживаемых\n\n"
+        "📂 Категории:\n"
+        "/categories — список категорий\n"
+        "/category <название> — поиск в категории"
     )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -109,6 +114,42 @@ async def list_tracked(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("\n".join(lines))
 
+async def list_categories(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    lines = ["📂 Категории товаров:\n"]
+    for key, cat in categories.CATEGORIES.items():
+        lines.append(f"{cat['emoji']} {cat['name']}")
+    lines.append("\nИспользуйте /category <название> для поиска в категории")
+    await update.message.reply_text("\n".join(lines))
+
+async def category_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("Использование: /category <название категории>\n\nКатегории: шампуни, кремы, гели, дезодоранты, парфюмерия, макияж")
+        return
+
+    category_name = " ".join(context.args).lower()
+
+    category_key = None
+    for key, cat in categories.CATEGORIES.items():
+        if category_name in cat["name"].lower() or category_name in cat["keywords"]:
+            category_key = key
+            break
+
+    if not category_key:
+        await update.message.reply_text("❌ Категория не найдена. Используйте /categories для списка категорий")
+        return
+
+    cat = categories.CATEGORIES[category_key]
+    query = cat["keywords"][0]
+
+    await update.message.reply_text(f"🔍 Ищу {cat['name']} ({cat['emoji']})...")
+
+    try:
+        results = await asyncio.to_thread(search.search_all_stores, query)
+        response = search.format_results(results)
+        await update.message.reply_text(response)
+    except Exception as e:
+        await update.message.reply_text(f"Ошибка поиска: {str(e)[:100]}")
+
 def main():
     from config import PROXY_URL
     
@@ -126,6 +167,8 @@ def main():
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("track", track_product))
     application.add_handler(CommandHandler("list", list_tracked))
+    application.add_handler(CommandHandler("categories", list_categories))
+    application.add_handler(CommandHandler("category", category_search))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
 
