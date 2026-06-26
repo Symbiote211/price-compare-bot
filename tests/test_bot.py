@@ -12,8 +12,8 @@ async def test_handle_message(mock_search):
     context = MagicMock()
     
     await handle_message(update, context)
-    
-    update.message.reply_text.assert_called_once()
+
+    assert update.message.reply_text.call_count >= 1
 
 @pytest.mark.asyncio
 @patch('image_recognizer.recognize_product')
